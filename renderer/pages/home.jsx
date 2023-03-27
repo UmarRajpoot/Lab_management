@@ -3,16 +3,18 @@ import Head from "next/head";
 import Link from "next/link";
 import { Layout, Form, Select, Button, notification, Typography } from "antd";
 
-const { Header, Content } = Layout;
-const { Item: FormItem } = Form;
-const { Option } = Select;
-
 import { PoweroffOutlined } from "@ant-design/icons";
 const { Title } = Typography;
 import { io } from "socket.io-client";
+import { useSelector } from "react-redux";
+// Firestore
+import { doc, setDoc } from "@firebase/firestore";
+import { firestore } from "../Components/InitializeApp";
 
 var os = require("os");
 const exec = require("child_process").exec;
+
+let interfaces = os.networkInterfaces();
 
 function executeForShutDown(command, callback) {
   exec(command, (error, stdout, stderr) => {
@@ -62,9 +64,29 @@ function Home() {
         // });
       }
     });
+    _SocketConnection.on("assignement", (msg) => {
+      console.log(msg);
+    });
   }, [_SocketConnection]);
 
-  let interfaces = os.networkInterfaces();
+  // Add Firebase Instance
+  const AddIpToFirebase = async () => {
+    const docRef = doc(firestore, "LabSoftware", interfaces["Wi-Fi"][1].mac);
+    let data = {
+      IpAddress: interfaces["Wi-Fi"][1].address,
+    };
+    try {
+      await setDoc(docRef, data).then(() => {
+        console.log("Ip Address Added");
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    AddIpToFirebase();
+  }, []);
 
   return (
     <div style={{ backgroundColor: "#f5f5f5", width: "100%", height: "100vh" }}>

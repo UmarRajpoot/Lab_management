@@ -3,7 +3,6 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const notifier = require("node-notifier");
-console.log("Server Called");
 
 const app = express();
 app.use(express.json());
@@ -38,12 +37,20 @@ io.on("connection", (socket) => {
     }
   });
 
+  const SocketTransport = (from, to) => {
+    socket.on(from, (msg) => {
+      console.log(msg);
+    });
+  };
+
   socket.on("SOFTIPToCLi", (msg) => {
     io.emit("getSoftIP", msg);
   });
   socket.on("shutdownPC", (msg) => {
     io.emit("shutdownPC", msg);
   });
+  SocketTransport("assignement");
+
   socket.on("disconnect", () => {
     console.log("User Disconnected.");
   });
