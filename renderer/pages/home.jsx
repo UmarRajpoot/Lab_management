@@ -1,18 +1,24 @@
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
-import { Layout, Form, Select, Button, notification, Typography } from "antd";
+import { Button, notification, Typography } from "antd";
 
 import { PoweroffOutlined } from "@ant-design/icons";
 const { Title } = Typography;
 import { io } from "socket.io-client";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 // Firestore
-import { doc, setDoc } from "@firebase/firestore";
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  collection,
+  onSnapshot,
+} from "@firebase/firestore";
 import { firestore } from "../Components/InitializeApp";
+import { getSocketInstance_Data } from "../Store/Socket_State/Socket_Actions";
 
 var os = require("os");
-const exec = require("child_process").exec;
+const { exec } = require("child_process");
 
 let interfaces = os.networkInterfaces();
 
@@ -42,10 +48,122 @@ function Home() {
 
   const [_SocketConnection, set_Socket_Connection] = useState(null);
 
+  const state = useSelector((state) =>
+    console.log("Socket State", state.Socket_Reducer.socketInstance)
+  );
+
+  const TaskList = async () => {
+    // Define the desired app names
+    // console.log("Run");
+    const desiredApps = ["chrome", "code", "brave"]; // Add more app names as needed
+
+    // Execute command to get the list of currently running apps
+    exec(
+      'tasklist /v /fi "STATUS eq running"',
+      async (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing command: ${error}`);
+          return;
+        }
+
+        // Process the output and extract the running app names
+        const processes = stdout.split("\n").slice(3, -1);
+        const runningApps = new Set();
+
+        processes.forEach((process) => {
+          const appName = process.split(/\s+/)[0];
+          desiredApps.forEach((desiredApp) => {
+            if (appName.toLowerCase().includes(desiredApp)) {
+              runningApps.add(appName);
+            }
+          });
+        });
+
+        // Convert the Set to an array
+        const uniqueRunningApps = Array.from(runningApps);
+
+        // Print the list of currently running apps
+        console.log(uniqueRunningApps);
+        // Send it to Firebase
+        const docRef = doc(
+          firestore,
+          "LabSoftware",
+          interfaces["Wi-Fi"][1].mac
+        );
+        let data = {
+          Processes: uniqueRunningApps,
+        };
+        try {
+          await updateDoc(docRef, data).then(() => {
+            console.log("Processed Added");
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    );
+  };
+
+  // useEffect(() => {
+  //   console.log("Running");
+  //   TaskList();
+  // }, []);
+
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const socket = io(`http://${interfaces["Wi-Fi"][1].address}:2000`);
     console.log(socket);
     set_Socket_Connection(socket);
+    dispatch(getSocketInstance_Data(socket));
+  }, []);
+
+  // Assignment Notification
+  const [assign, setAssign] = useState([]);
+  const [quiz, setQuiz] = useState([]);
+  const getAssignment = async () => {
+    const dbref = collection(firestore, "Assignments");
+    onSnapshot(dbref, (docSnap) => {
+      setAssign(
+        docSnap.docs.map((doc) => {
+          return {
+            id: doc.id,
+            data: doc.data(),
+          };
+        })
+      );
+    });
+  };
+  const getQuiz = async () => {
+    const dbref = collection(firestore, "Quizes");
+    onSnapshot(dbref, (docSnap) => {
+      setQuiz(
+        docSnap.docs.map((doc) => {
+          return {
+            id: doc.id,
+            data: doc.data(),
+          };
+        })
+      );
+    });
+  };
+
+  useEffect(() => {
+    if (!_SocketConnection) return;
+    _SocketConnection.emit("assignmentAdded", (msg) => {
+      console.log(msg);
+    });
+  }, [assign]);
+  useEffect(() => {
+    if (!_SocketConnection) return;
+    _SocketConnection.emit("quizAdded", (msg) => {
+      console.log(msg);
+    });
+  }, [quiz]);
+
+  useEffect(() => {
+    getAssignment();
+    getQuiz();
   }, []);
 
   useEffect(() => {
@@ -59,9 +177,9 @@ function Home() {
     _SocketConnection.on("shutdownPC", (shutdownPC) => {
       if (shutdownPC) {
         console.log("PC Shutting down after 5 seconds");
-        // executeForShutDown("shutdown /p", (output) => {
-        //   console.log(output);
-        // });
+        executeForShutDown("shutdown /p", (output) => {
+          console.log(output);
+        });
       }
     });
     _SocketConnection.on("assignement", (msg) => {

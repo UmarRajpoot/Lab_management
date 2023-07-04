@@ -1,12 +1,12 @@
-export const SOCKET_INSTANCE = 'SOCKET_INSTANCE';
+export const SOCKET_INSTANCE = "SOCKET_INSTANCE";
 
-export const getSocket_Payload = socket => ({
+export const getSocket_Payload = (socket) => ({
   type: SOCKET_INSTANCE,
-  payload: {socket},
+  payload: socket,
 });
 
 export function getSocketInstance_Data(socket) {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(getSocket_Payload(socket));
   };
 }

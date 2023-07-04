@@ -57,6 +57,22 @@ io.on("connection", (socket) => {
   socket.on("connect_error", (err) => {
     console.log(`connect_error due to ${err.message}`);
   });
+  socket.on("assignmentAdded", (msg) => {
+    notifier.notify({
+      title: "Assignment Added",
+      message: "Your Assignment Added from Professor.",
+      icon: "../../resources/icon.ico",
+      appID: "Assignment Added",
+    });
+  });
+  socket.on("quizAdded", (msg) => {
+    notifier.notify({
+      title: "Quiz Added",
+      message: "Your Quiz Added from Professor.",
+      icon: "../../resources/icon.ico",
+      appID: "Quiz Added",
+    });
+  });
 });
 
 app.get("/", (req, res) => {

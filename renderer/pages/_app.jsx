@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Head from "next/head";
 
 import "antd/dist/antd.css";
@@ -11,7 +11,6 @@ import { Provider } from "react-redux";
 
 function MyApp({ Component, pageProps }) {
   const store = createStore(RootReducer, applyMiddleware(thunk));
-
   return (
     <React.Fragment>
       <Head>

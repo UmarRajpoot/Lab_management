@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Radio, Typography } from "antd";
-const { Title, Paragraph } = Typography;
+import { Button, Typography } from "antd";
+const { Title } = Typography;
 import { collection, onSnapshot } from "firebase/firestore";
 import { firestore } from "../Components/InitializeApp";
+import QuizComp from "../Components/QuizComp";
+import QuizModel from "../Components/QuizModel";
 const Quiz = () => {
   const [quiz, setQuiz] = useState([]);
 
+  const [subAnswer, setSubAnswer] = useState([]);
+
+  const [TotalScore, setTotalScore] = useState(0);
+  const [calScore, setCalScore] = useState(0);
+
   const getQuiz = async () => {
     const dbref = collection(firestore, "Quizes");
-
     onSnapshot(dbref, (docSnap) => {
+      setTotalScore(docSnap.size);
       setQuiz(
         docSnap.docs.map((doc) => {
           return {
@@ -24,45 +31,64 @@ const Quiz = () => {
   useEffect(() => {
     getQuiz();
   }, []);
-  //   console.log(quiz);
 
-  const QuizComp = ({ question, options, answer }) => {
-    return (
-      <div style={{ marginTop: 30 }}>
-        <Title level={3}>{question}</Title>
-        <Radio.Group>
-          {options?.map((opt, index) => {
-            return (
-              <Radio
-                key={index}
-                value={`${opt}`}
-                style={{ fontSize: 18, padding: 5 }}
-              >
-                {opt}
-              </Radio>
-            );
-          })}
-        </Radio.Group>
-        {/* <Paragraph>{paragraph}</Paragraph> */}
-      </div>
-    );
-  };
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div>
-      <Title>Quiz</Title>
+      <QuizModel
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        TotalScore={TotalScore}
+        calScore={calScore}
+      />
+      <Title>
+        Quiz {calScore} / {TotalScore}
+      </Title>
       {quiz.map((qui, qindex) => {
-        return qui.data.Quizes.map((quiz, index) => {
-          console.log(quiz);
-          return (
-            <QuizComp
-              key={index}
-              question={quiz.Question}
-              options={quiz.Options}
-            />
-          );
-        });
+        return (
+          <QuizComp
+            key={qindex}
+            question={qui.data.question}
+            options={qui.data.options}
+            answer={qui.data.answer}
+            setSubAnswer={(value) => {
+              if (value === qui.data.answer) {
+                setSubAnswer([
+                  ...subAnswer,
+                  {
+                    question: qui.data.question,
+                    answer: value,
+                    correct: true,
+                  },
+                ]);
+              } else {
+                const removesel = subAnswer.filter(
+                  (filans) => filans.question !== qui.data.question
+                );
+                setSubAnswer(removesel);
+              }
+            }}
+          />
+        );
       })}
+      <Button
+        type="primary"
+        style={{ borderRadius: 5, marginTop: 20 }}
+        onClick={() => {
+          const uniqueArray = subAnswer.filter((item, index) => {
+            // Check if the index of the current item is the same as the index of its first occurrence
+            return (
+              index ===
+              subAnswer.findIndex((obj) => obj.question === item.question)
+            );
+          });
+          setCalScore(uniqueArray.length);
+          setIsModalOpen(true);
+        }}
+      >
+        Submit
+      </Button>
     </div>
   );
 };

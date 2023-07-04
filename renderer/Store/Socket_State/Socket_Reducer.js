@@ -1,4 +1,4 @@
-import * as ActionType from './Socket_Actions';
+import * as ActionType from "./Socket_Actions";
 
 const initialState = {
   socketInstance: [],
@@ -9,7 +9,7 @@ const Socket_Reducer = (state = initialState, actions) => {
     case ActionType.SOCKET_INSTANCE:
       return {
         ...state,
-        socketInstance: actions.payload.socket,
+        socketInstance: actions.payload,
       };
     default:
       return state;

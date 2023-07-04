@@ -3,10 +3,11 @@ import {
   FileDoneOutlined,
   FileMarkdownOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, theme } from "antd";
+import { Layout, Menu } from "antd";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 const { Header, Content, Footer, Sider } = Layout;
+
 const Wrapper = ({ children }) => {
   const router = useRouter();
 
@@ -33,7 +34,7 @@ const Wrapper = ({ children }) => {
               icon: React.createElement(DashboardFilled),
               label: `Dashboard`,
               onClick: () => {
-                router.push("/home");
+                router.replace("/home");
               },
             },
             {
@@ -41,7 +42,7 @@ const Wrapper = ({ children }) => {
               icon: React.createElement(FileDoneOutlined),
               label: `Assignment`,
               onClick: () => {
-                router.push("/Assignment");
+                router.replace("/Assignment");
               },
             },
             {
